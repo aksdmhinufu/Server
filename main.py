@@ -24,3 +24,6 @@ def speech_to_text():
 @app.route('/')
 def index():
     return "Pass input to API"
+
+if __name__ == '__main__':
+    app.run(debug=True)
