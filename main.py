@@ -1,14 +1,17 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, File, UploadFile, HTTPException
 import requests
 
-app = Flask(__name__)
+app = FastAPI()
 
 # Define the endpoint for the speech-to-text API
-@app.route('/speech-to-text', methods=['POST'])
-def speech_to_text():
+@app.post('/speech-to-text')
+async def speech_to_text(audio: UploadFile = File(...)):
+    # Check that the file is an audio file
+    if not audio.content_type.startswith('audio/'):
+        raise HTTPException(status_code=400, detail="File must be an audio file")
+
     # Get the audio data from the request
-    audio_file = request.files['audio']
-    audio_data = audio_file.read()
+    audio_data = await audio.read()
 
     # Make a POST request to the Hugging Face API
     url = "https://api-inference.huggingface.co/models/facebook/wav2vec2-base-960h-robust"
@@ -19,11 +22,8 @@ def speech_to_text():
     transcription = response.json()[0]['transcription']
 
     # Return the transcription as a JSON response
-    return jsonify({'transcription': transcription})
+    return {'transcription': transcription}
 
-@app.route('/')
-def index():
+@app.get('/')
+async def index():
     return "Pass input to API"
-
-if __name__ == '__main__':
-    app.run(debug=True)
